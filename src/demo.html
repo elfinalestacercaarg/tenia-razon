@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Tenía Razón</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"/>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@400;500;600&display=swap');
+:root{
+  --bg:#080c10;--card:#0f1520;--card2:#131c2a;--border:#1e2d40;
+  --acc:#29b6f6;--gold:#ffd600;--danger:#ef5350;--success:#66bb6a;
+  --txt:#e8f4fd;--muted:#5a7a99;
+  --font-head:'Syne',sans-serif;--font-body:'Inter',sans-serif;
+  --char-color:#29b6f6;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--txt);font-family:var(--font-body);min-height:100vh;overflow-x:hidden}
+button{cursor:pointer;font-family:var(--font-body)}
+input,textarea{font-family:var(--font-body);outline:none}
+input::placeholder,textarea::placeholder{color:var(--muted)}
+
+.screen{display:none;position:fixed;inset:0;overflow-y:auto;z-index:10;background:var(--bg)}
+.screen.active{display:block}
+#login-screen.active{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100%;padding:24px}
+
+/* LOGIN */
+.login-logo{font-family:var(--font-head);font-size:2.8rem;font-weight:800;color:var(--acc);text-align:center;line-height:1}
+.login-sub{font-size:.72rem;color:var(--muted);letter-spacing:4px;text-transform:uppercase;margin-top:6px;text-align:center}
+.login-card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:28px 24px;width:100%;max-width:380px;margin-top:20px}
+.field-label{font-size:.68rem;color:var(--muted);letter-spacing:2px;text-transform:uppercase;display:block;margin-bottom:8px}
+.field-input{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:13px 16px;color:var(--txt);font-size:.95rem;margin-bottom:14px;transition:border-color .2s}
+.field-input:focus{border-color:var(--acc)}
+.btn-main{width:100%;background:var(--acc);color:#080c10;border:none;border-radius:12px;padding:14px;font-family:var(--font-head);font-size:1.1rem;font-weight:800;letter-spacing:1px;transition:transform .1s}
+.btn-main:active{transform:scale(.98)}
+.login-err{color:var(--danger);font-size:.82rem;text-align:center;margin-bottom:12px;display:none}
+.login-bonus{margin-top:14px;text-align:center;font-size:.78rem;color:var(--muted);background:rgba(41,182,246,.07);border:1px solid rgba(41,182,246,.15);border-radius:10px;padding:10px}
+.login-bonus b{color:var(--acc)}
+
+/* ONBOARDING - ELEGIR PERSONAJE */
+#char-screen.active{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;min-height:100%;padding:32px 20px 100px}
+.char-title{font-family:var(--font-head);font-size:1.6rem;font-weight:800;text-align:center;margin-bottom:6px}
+.char-sub{font-size:.82rem;color:var(--muted);text-align:center;margin-bottom:28px}
+.char-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;max-width:400px}
+.char-card{background:var(--card);border:2px solid var(--border);border-radius:20px;padding:20px 14px;text-align:center;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.char-card.selected{border-color:var(--char-color)}
+.char-card::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity .2s;border-radius:18px}
+.char-card.selected::before{opacity:1}
+.char-emoji{font-size:3rem;margin-bottom:8px;display:block}
+.char-name{font-family:var(--font-head);font-size:1.1rem;font-weight:800}
+.char-tag{font-size:.68rem;color:var(--muted);margin-top:4px;line-height:1.4}
+.char-team-badge{position:absolute;top:10px;right:10px;font-size:.6rem;font-weight:700;padding:2px 6px;border-radius:20px;letter-spacing:1px}
+.btn-elegir{margin-top:20px;width:100%;max-width:400px;background:var(--acc);color:#080c10;border:none;border-radius:14px;padding:15px;font-family:var(--font-head);font-size:1.2rem;font-weight:800;display:none}
+.btn-elegir.show{display:block}
+
+/* APP */
+#app-screen{padding-bottom:80px}
+.header{position:sticky;top:0;z-index:100;background:rgba(8,12,16,.96);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.header-left{display:flex;align-items:center;gap:10px}
+.header-char{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.3rem;border:2px solid var(--char-color)}
+.header-logo{font-family:var(--font-head);font-size:1.2rem;font-weight:800;color:var(--acc)}
+.header-wallet{display:flex;align-items:center;gap:6px;background:rgba(41,182,246,.08);border:1px solid rgba(41,182,246,.2);border-radius:20px;padding:5px 10px}
+.header-wallet .amt{font-weight:700;font-size:.85rem;color:var(--acc)}
+.header-wallet .sym{font-size:.62rem;color:var(--muted)}
+
+/* COACH BUBBLE */
+.coach-bubble{margin:12px 0;background:rgba(41,182,246,.06);border:1px solid rgba(41,182,246,.15);border-radius:16px;padding:12px 14px;display:flex;align-items:flex-start;gap:10px}
+.coach-avatar{font-size:1.6rem;flex-shrink:0}
+.coach-text{font-size:.82rem;color:var(--muted);line-height:1.5}
+.coach-text b{font-style:normal;font-weight:600}
+
+/* BOTTOM NAV */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:rgba(8,12,16,.98);backdrop-filter:blur(10px);border-top:1px solid var(--border);display:flex;align-items:center;padding:8px 0;z-index:100}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;color:var(--muted);font-size:.55rem;letter-spacing:1px;text-transform:uppercase;padding:4px 0;transition:color .2s}
+.nav-btn i{font-size:1.25rem}
+.nav-btn.active{color:var(--char-color)}
+.nav-center{flex:1;display:flex;justify-content:center;align-items:center}
+.nav-plus{border:none;width:50px;height:50px;border-radius:14px;font-size:1.4rem;display:flex;align-items:center;justify-content:center;margin-top:-18px;transition:transform .1s;background:var(--char-color);color:#080c10;box-shadow:0 4px 20px rgba(41,182,246,.35)}
+.nav-plus:active{transform:scale(.95)}
+
+/* TABS */
+.tab-content{display:none;padding:14px}
+.tab-content.active{display:block}
+
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:12px}
+.card2{background:var(--card2);border-radius:10px;padding:10px}
+.sec-title{font-family:var(--font-head);font-size:1rem;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+
+/* CHALLENGE HERO */
+.ch-hero{border-radius:20px;padding:18px;margin-bottom:14px;position:relative;overflow:hidden;border:1px solid rgba(41,182,246,.25);background:#0a1a2e}
+.ch-pool{font-family:var(--font-head);font-size:2.2rem;font-weight:800;color:var(--gold)}
+.ch-meta{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0}
+.ch-meta-item{background:rgba(0,0,0,.3);border-radius:10px;padding:9px;text-align:center}
+.ch-meta-val{font-family:var(--font-head);font-size:1.1rem;font-weight:700}
+.ch-meta-lbl{font-size:.6rem;color:var(--muted);margin-top:2px}
+.btn-join{width:100%;border:none;border-radius:12px;padding:14px;font-family:var(--font-head);font-size:1.1rem;font-weight:800;letter-spacing:1px;transition:transform .1s;background:var(--acc);color:#080c10}
+.btn-join:active{transform:scale(.98)}
+
+/* LIVE */
+.live-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(239,83,80,.12);border:1px solid rgba(239,83,80,.3);color:var(--danger);border-radius:20px;padding:4px 10px;font-size:.68rem;font-weight:700;letter-spacing:1px}
+.live-dot{width:6px;height:6px;background:var(--danger);border-radius:50%;animation:pulse 1.4s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.2}}
+
+/* EQUIPOS */
+.teams-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:16px}
+.team-card{border-radius:14px;padding:12px 6px;text-align:center;border:2px solid transparent;cursor:pointer;transition:all .2s;background:var(--card)}
+.team-card.winning{border-color:var(--gold)}
+.team-emoji{font-size:1.8rem;display:block;margin-bottom:4px}
+.team-name{font-family:var(--font-head);font-size:.75rem;font-weight:800}
+.team-pts{font-size:.62rem;color:var(--muted);margin-top:2px}
+
+/* AMIGOS */
+.friend-row{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--border)}
+.friend-ava{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0}
+.friend-info{flex:1}
+.friend-name{font-weight:600;font-size:.88rem}
+.friend-status{font-size:.72rem;color:var(--muted);margin-top:2px}
+.friend-razon{font-family:var(--font-head);font-size:.95rem;font-weight:700}
+.s-ok{color:var(--success)}
+.s-fail{color:var(--danger)}
+.s-warn{color:var(--gold)}
+
+/* DAYS */
+.days-row{display:flex;gap:5px;margin-top:10px;flex-wrap:wrap}
+.day{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700}
+.day-ok{background:rgba(102,187,106,.18);color:var(--success);border:1px solid rgba(102,187,106,.3)}
+.day-fail{background:rgba(239,83,80,.18);color:var(--danger);border:1px solid rgba(239,83,80,.3)}
+.day-now{background:rgba(41,182,246,.18);color:var(--acc);border:1px solid rgba(41,182,246,.4)}
+.day-next{background:var(--card2);color:var(--muted);border:1px solid var(--border)}
+
+/* WALLET */
+.wallet-hero{background:linear-gradient(135deg,#0a1f35,#0d2540);border:1px solid rgba(41,182,246,.25);border-radius:20px;padding:22px;margin-bottom:14px;text-align:center}
+.wallet-bal{font-family:var(--font-head);font-size:2.6rem;font-weight:800;color:var(--acc)}
+.w-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.w-btn{background:rgba(41,182,246,.1);border:1px solid rgba(41,182,246,.2);border-radius:12px;padding:11px;color:var(--acc);font-weight:600;font-size:.82rem;display:flex;align-items:center;justify-content:center;gap:6px}
+.conversor{background:var(--card2);border-radius:12px;padding:14px;margin-bottom:12px}
+.conv-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.conv-input{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--txt);font-size:.95rem}
+.conv-label{font-size:.72rem;color:var(--muted);width:60px;flex-shrink:0}
+.conv-result{font-family:var(--font-head);font-size:.95rem;color:var(--gold);font-weight:700}
+
+/* TX */
+.tx-row{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--border)}
+.tx-ico{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:.95rem;flex-shrink:0}
+.tx-info{flex:1}
+.tx-desc{font-size:.86rem;font-weight:500}
+.tx-date{font-size:.7rem;color:var(--muted)}
+.tx-amt{font-family:var(--font-head);font-size:.95rem;font-weight:700}
+.tx-plus{color:var(--success)}
+.tx-minus{color:var(--danger)}
+
+/* RANKING */
+.rank-row{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--border)}
+.rank-pos{font-family:var(--font-head);font-size:1rem;font-weight:800;width:26px;text-align:center;flex-shrink:0}
+.rank-ava{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0}
+.rank-info{flex:1}
+.rank-name{font-weight:600;font-size:.88rem}
+.rank-meta{font-size:.7rem;color:var(--muted)}
+.rank-pts{font-family:var(--font-head);font-size:.95rem;color:var(--gold);font-weight:700}
+
+/* CHAT */
+.chat-wrap{display:flex;flex-direction:column;gap:10px;padding-bottom:80px}
+.msg{max-width:85%;padding:10px 14px;border-radius:16px;font-size:.86rem;line-height:1.5}
+.msg-coach{background:var(--card2);border-bottom-left-radius:4px;align-self:flex-start}
+.msg-user{background:var(--acc);color:#080c10;border-bottom-right-radius:4px;align-self:flex-end;font-weight:500}
+.chat-sender{font-size:.65rem;color:var(--muted);margin-bottom:3px}
+.chat-input-wrap{position:fixed;bottom:80px;left:0;right:0;background:rgba(8,12,16,.97);border-top:1px solid var(--border);padding:10px 14px;display:flex;gap:8px;z-index:90}
+.chat-input{flex:1;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px 14px;color:var(--txt);font-size:.9rem}
+.chat-send{background:var(--acc);color:#080c10;border:none;border-radius:12px;padding:10px 16px;font-weight:700;font-size:.88rem}
+
+/* MODAL */
+.modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);backdrop-filter:blur(4px);z-index:200;align-items:flex-end;justify-content:center}
+.modal-ov.open{display:flex}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:24px 24px 0 0;padding:22px;width:100%;max-height:88vh;overflow-y:auto;position:relative}
+.modal-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 18px}
+.modal-title{font-family:var(--font-head);font-size:1.2rem;font-weight:800;margin-bottom:18px}
+.modal-close{position:absolute;top:18px;right:18px;background:var(--card2);border:none;color:var(--muted);width:30px;height:30px;border-radius:50%;font-size:.9rem;display:flex;align-items:center;justify-content:center}
+.form-group{margin-bottom:14px}
+.form-label{font-size:.68rem;color:var(--muted);letter-spacing:2px;text-transform:uppercase;display:block;margin-bottom:7px}
+.form-input{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--txt);font-size:.92rem}
+.form-input:focus{border-color:var(--acc)}
+.toggle-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.toggle-btn{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px;color:var(--muted);font-size:.82rem;font-weight:500;transition:all .2s}
+.toggle-btn.on{background:rgba(41,182,246,.12);border-color:var(--acc);color:var(--acc)}
+.dur-row{display:flex;gap:6px;flex-wrap:wrap}
+.dur-btn{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:7px 13px;color:var(--muted);font-size:.8rem;transition:all .2s}
+.dur-btn.on{background:rgba(41,182,246,.12);border-color:var(--acc);color:var(--acc)}
+.btn-crear{width:100%;border:none;border-radius:14px;padding:15px;font-family:var(--font-head);font-size:1.15rem;font-weight:800;margin-top:8px;background:var(--acc);color:#080c10}
+
+/* TOAST */
+.toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--card);border:1px solid var(--border);border-radius:12px;padding:11px 20px;font-size:.86rem;font-weight:500;z-index:400;opacity:0;transition:all .3s;white-space:nowrap;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* PROGRESS */
+.prog-bar{background:var(--border);border-radius:10px;height:5px;margin:9px 0;overflow:hidden}
+.prog-fill{height:100%;border-radius:10px;background:var(--acc);transition:width .5s}
+
+.anim-float{animation:float 3s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+</style>
+</head>
+<body>
+
+<!-- ═══ LOGIN ═══ -->
+<div id="login-screen" class="screen active">
+  <div style="text-align:center;margin-bottom:20px">
+    <div style="font-size:4rem" class="anim-float">🏆</div>
+    <div class="login-sub">La app que te lo demuestra</div>
+    <div class="login-logo">Tenía Razón</div>
+  </div>
+  <div class="login-card">
+    <label class="field-label">Usuario</label>
+    <input class="field-input" id="u-user" placeholder="Tu usuario" onkeydown="if(event.key==='Enter')doLogin()">
+    <label class="field-label">Contraseña</label>
+    <input class="field-input" id="u-pass" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+    <div class="login-err" id="login-err"></div>
+    <button class="btn-main" onclick="doLogin()">ENTRAR</button>
+    <div style="text-align:center;margin:12px 0;color:var(--muted);font-size:.78rem">— o —</div>
+    <button class="btn-main" style="background:var(--card2);color:var(--txt);border:1px solid var(--border)" onclick="doRegister()">CREAR CUENTA</button>
+  </div>
+  <div class="login-bonus">🎁 Registrate y ganá <b>50.000 $RAZON</b> gratis</div>
+</div>
+
+<!-- ═══ ELEGIR PERSONAJE ═══ -->
+<div id="char-screen" class="screen">
+  <div class="char-title">Elegí tu equipo</div>
+  <div class="char-sub">Tu coach te va a acompañar en cada desafío.<br>Elegí bien — los equipos compiten entre sí 👊</div>
+  <div class="char-grid" id="char-grid">
+
+    <div class="char-card" data-char="nahue" onclick="selectChar(this,'nahue')" style="--char-color:#ef5350">
+      <div class="char-team-badge" style="background:rgba(239,83,80,.2);color:#ef5350">EQUIPO</div>
+      <span class="char-emoji">⚡</span>
+      <div class="char-name" style="color:#ef5350">NAHUE</div>
+      <div class="char-tag">Extremo, práctico y creativo.<br>Sin excusas, sin vueltas.</div>
+    </div>
+
+    <div class="char-card" data-char="juan" onclick="selectChar(this,'juan')" style="--char-color:#ffd600">
+      <div class="char-team-badge" style="background:rgba(255,214,0,.2);color:#ffd600">EQUIPO</div>
+      <span class="char-emoji">🎯</span>
+      <div class="char-name" style="color:#ffd600">JUAN</div>
+      <div class="char-tag">Estricto pero justo.<br>Te exige porque te respeta.</div>
+    </div>
+
+    <div class="char-card" data-char="stephie" onclick="selectChar(this,'stephie')" style="--char-color:#f06292">
+      <div class="char-team-badge" style="background:rgba(240,98,146,.2);color:#f06292">EQUIPO</div>
+      <span class="char-emoji">💋</span>
+      <div class="char-name" style="color:#f06292">STEPHIE</div>
+      <div class="char-tag">Te motiva para que te veas bien.<br>¿La querés impresionar?</div>
+    </div>
+
+    <div class="char-card" data-char="mia" onclick="selectChar(this,'mia')" style="--char-color:#66bb6a">
+      <div class="char-team-badge" style="background:rgba(102,187,106,.2);color:#66bb6a">EQUIPO</div>
+      <span class="char-emoji">🌸</span>
+      <div class="char-name" style="color:#66bb6a">MÍA</div>
+      <div class="char-tag">Siempre positiva, siempre ahí.<br>Tu mayor hincha.</div>
+    </div>
+
+  </div>
+  <button class="btn-elegir" id="btn-elegir" onclick="confirmChar()">UNIRME AL EQUIPO ▸</button>
+</div>
+
+<!-- ═══ APP ═══ -->
+<div id="app-screen" class="screen">
+  <div class="header">
+    <div class="header-left">
+      <div class="header-char" id="h-char-ava"></div>
+      <div>
+        <div class="header-logo">Tenía Razón</div>
+        <div style="font-size:.6rem;color:var(--muted)" id="h-team-label"></div>
+      </div>
+    </div>
+    <div class="header-wallet">
+      <i class="fa fa-coins" style="color:var(--gold);font-size:.85rem"></i>
+      <span class="amt" id="h-balance">50.000</span>
+      <span class="sym">$RAZON</span>
+    </div>
+  </div>
+
+  <!-- HOME -->
+  <div id="tab-home" class="tab-content active">
+    <div class="coach-bubble" id="coach-home">
+      <div class="coach-avatar" id="coach-ava-home"></div>
+      <div class="coach-text" id="coach-msg-home"></div>
+    </div>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div class="live-badge"><div class="live-dot"></div>HAPPENING NOW</div>
+      <div style="font-size:.72rem;color:var(--muted)">Conversor rápido</div>
+    </div>
+
+    <!-- CONVERSOR RÁPIDO -->
+    <div style="background:rgba(41,182,246,.05);border:1px solid rgba(41,182,246,.12);border-radius:12px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;gap:8px">
+      <input id="conv-quick" type="number" placeholder="ARS" style="flex:1;background:none;border:none;color:var(--txt);font-size:.95rem;width:80px" oninput="quickConv()">
+      <div style="color:var(--muted);font-size:.8rem">ARS =</div>
+      <div id="conv-quick-result" style="font-family:var(--font-head);font-size:1rem;color:var(--gold);font-weight:700">— $RAZON</div>
+    </div>
+
+    <!-- CHALLENGE HERO -->
+    <div class="ch-hero">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div style="font-size:.75rem;color:var(--acc);margin-bottom:3px">10.000 pasos × 7 días</div>
+          <div style="font-family:var(--font-head);font-size:1.2rem;font-weight:800">Desafío Semanal Elite</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:.62rem;color:var(--muted)">pozo actual</div>
+          <div class="ch-pool">2.4M</div>
+          <div style="font-size:.65rem;color:var(--muted)">$RAZON ≈ $240.000 ARS</div>
+        </div>
+      </div>
+      <div class="ch-meta">
+        <div class="ch-meta-item"><div class="ch-meta-val">50k</div><div class="ch-meta-lbl">Entrada</div></div>
+        <div class="ch-meta-item"><div class="ch-meta-val">48</div><div class="ch-meta-lbl">Jugando</div></div>
+        <div class="ch-meta-item"><div class="ch-meta-val">5 días</div><div class="ch-meta-lbl">Quedan</div></div>
+      </div>
+      <button class="btn-join" onclick="joinChallenge(50000,'Desafío Semanal Elite')">UNIRME — 50k $RAZON</button>
+    </div>
+
+    <!-- EQUIPOS -->
+    <div class="sec-title">⚔️ Guerra de Equipos — Esta semana</div>
+    <div class="teams-bar" id="teams-bar"></div>
+
+    <!-- AMIGOS -->
+    <div class="sec-title">👥 Amigos en acción</div>
+    <div class="card" style="padding:0 14px">
+      <div class="friend-row">
+        <div class="friend-ava" style="background:rgba(239,83,80,.15)">⚡</div>
+        <div class="friend-info">
+          <div class="friend-name">Nico <span class="s-ok">✓ día 5/7</span> <span style="font-size:.65rem;background:rgba(239,83,80,.15);color:#ef5350;padding:2px 6px;border-radius:10px">NAHUE</span></div>
+          <div class="friend-status">12.450 pasos hoy · En racha 🔥</div>
+        </div>
+        <div class="friend-razon s-ok">+80k</div>
+      </div>
+      <div class="friend-row">
+        <div class="friend-ava" style="background:rgba(240,98,146,.15)">💋</div>
+        <div class="friend-info">
+          <div class="friend-name">Caro <span class="s-warn">día 3/7</span> <span style="font-size:.65rem;background:rgba(240,98,146,.15);color:#f06292;padding:2px 6px;border-radius:10px">STEPHIE</span></div>
+          <div class="friend-status">8.200 / 10.000 pasos hoy ⚠️</div>
+        </div>
+        <div class="friend-razon s-warn">50k</div>
+      </div>
+      <div class="friend-row" style="border:none">
+        <div class="friend-ava" style="background:rgba(239,83,80,.1)">💀</div>
+        <div class="friend-info">
+          <div class="friend-name">Seba <span class="s-fail">✗ falló día 3</span> <span style="font-size:.65rem;background:rgba(255,214,0,.15);color:#ffd600;padding:2px 6px;border-radius:10px">JUAN</span></div>
+          <div class="friend-status">Perdió 50.000 $RAZON 💀 = $5.000 ARS</div>
+        </div>
+        <div class="friend-razon s-fail">-50k</div>
+      </div>
+    </div>
+
+    <!-- MIS DESAFÍOS -->
+    <div class="sec-title" style="margin-top:18px">🏆 Mi desafío activo</div>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div style="font-size:.72rem;color:var(--acc)">10.000 pasos · 7 días</div>
+          <div style="font-weight:600;margin-top:2px">Desafío Semanal Elite</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-family:var(--font-head);color:var(--gold);font-size:1rem">50k $RAZON</div>
+          <div style="font-size:.65rem;color:var(--muted)">= $5.000 ARS</div>
+        </div>
+      </div>
+      <div class="prog-bar"><div class="prog-fill" style="width:57%"></div></div>
+      <div style="display:flex;justify-content:space-between;font-size:.7rem;color:var(--muted)"><span>Día 4 de 7</span><span>57%</span></div>
+      <div class="days-row">
+        <div class="day day-ok">L</div><div class="day day-ok">M</div>
+        <div class="day day-ok">X</div><div class="day day-now">J</div>
+        <div class="day day-next">V</div><div class="day day-next">S</div>
+        <div class="day day-next">D</div>
+      </div>
+      <button style="width:100%;margin-top:12px;background:rgba(41,182,246,.1);border:1px solid rgba(41,182,246,.25);border-radius:10px;padding:10px;color:var(--acc);font-weight:600;font-size:.86rem" onclick="cargarPasos()">📸 Cargar pasos de hoy</button>
+    </div>
+
+    <!-- INVITAR -->
+    <div style="background:linear-gradient(135deg,rgba(41,182,246,.08),rgba(41,182,246,.03));border:1px solid rgba(41,182,246,.15);border-radius:16px;padding:14px;display:flex;align-items:center;gap:12px;margin-bottom:12px">
+      <div style="font-size:2rem">👊</div>
+      <div style="flex:1">
+        <div style="font-weight:600;font-size:.88rem">Desafiá a un amigo</div>
+        <div style="font-size:.72rem;color:var(--muted);margin-top:2px">Si los dos cumplen, los dos ganan bono extra</div>
+      </div>
+      <button style="background:var(--acc);color:#080c10;border:none;border-radius:10px;padding:8px 14px;font-weight:700;font-size:.78rem;white-space:nowrap" onclick="invitar()">Invitar</button>
+    </div>
+  </div>
+
+  <!-- CHALLENGES -->
+  <div id="tab-challenges" class="tab-content">
+    <div class="sec-title">🔥 Desafíos públicos</div>
+    <div id="pub-challenges"></div>
+    <div class="sec-title" style="margin-top:16px">🔒 Privados entre amigos</div>
+    <div class="card" style="text-align:center;padding:24px">
+      <div style="font-size:2.2rem;margin-bottom:8px">👊</div>
+      <div style="font-weight:600;margin-bottom:4px">Duelo entre amigos</div>
+      <div style="font-size:.8rem;color:var(--muted);margin-bottom:16px">Creá un desafío privado e invitá a quien quieras por WhatsApp</div>
+      <button class="btn-main" style="width:auto;padding:10px 24px;font-size:.9rem" onclick="openCrear('privado')">Crear duelo privado</button>
+    </div>
+  </div>
+
+  <!-- WALLET -->
+  <div id="tab-wallet" class="tab-content">
+    <div class="wallet-hero">
+      <div style="font-size:.7rem;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px">Tu balance</div>
+      <div class="wallet-bal" id="w-bal">50.000</div>
+      <div style="font-size:.9rem;color:var(--acc);font-weight:600">$RAZON</div>
+      <div style="font-size:.8rem;color:var(--muted);margin-top:4px" id="w-ars">≈ $5.000 ARS · $0.50 USD</div>
+      <div class="w-actions">
+        <button class="w-btn" onclick="comprar()"><i class="fa fa-plus"></i> Comprar</button>
+        <button class="w-btn" onclick="retirar()"><i class="fa fa-arrow-up"></i> Retirar</button>
+      </div>
+    </div>
+
+    <!-- CONVERSOR -->
+    <div class="sec-title">💱 Conversor</div>
+    <div class="conversor">
+      <div class="conv-row">
+        <span class="conv-label" style="color:var(--muted);font-size:.72rem">ARS $</span>
+        <input class="conv-input" id="conv-ars" type="number" placeholder="Ej: 10000" oninput="convertArs()">
+        <span class="conv-result" id="conv-ars-result">— $RAZON</span>
+      </div>
+      <div class="conv-row" style="margin-bottom:0">
+        <span class="conv-label" style="color:var(--muted);font-size:.72rem">$RAZON</span>
+        <input class="conv-input" id="conv-razon" type="number" placeholder="Ej: 50000" oninput="convertRazon()">
+        <span class="conv-result" id="conv-razon-result">— ARS</span>
+      </div>
+      <div style="margin-top:10px;font-size:.7rem;color:var(--muted);text-align:center">1 USD = $1.200 ARS = 10.000 $RAZON · Dólar blue</div>
+    </div>
+
+    <div class="sec-title">📊 Historial</div>
+    <div class="card" style="padding:0 14px">
+      <div class="tx-row"><div class="tx-ico" style="background:rgba(102,187,106,.12)">🎁</div><div class="tx-info"><div class="tx-desc">Bono bienvenida</div><div class="tx-date">Hoy · $5.000 ARS</div></div><div class="tx-amt tx-plus">+50.000</div></div>
+      <div class="tx-row"><div class="tx-ico" style="background:rgba(41,182,246,.12)">🏆</div><div class="tx-info"><div class="tx-desc">Ganaste: Desafío 3 días</div><div class="tx-date">Hace 5 días · $12.000 ARS</div></div><div class="tx-amt tx-plus">+120.000</div></div>
+      <div class="tx-row"><div class="tx-ico" style="background:rgba(239,83,80,.12)">💀</div><div class="tx-info"><div class="tx-desc">Perdiste: Desafío 7 días</div><div class="tx-date">Hace 12 días · $5.000 ARS</div></div><div class="tx-amt tx-minus">-50.000</div></div>
+      <div class="tx-row" style="border:none"><div class="tx-ico" style="background:rgba(255,214,0,.12)">💰</div><div class="tx-info"><div class="tx-desc">Compra con Mercado Pago</div><div class="tx-date">Hace 15 días · $10.000 ARS</div></div><div class="tx-amt tx-plus">+100.000</div></div>
+    </div>
+
+    <div class="card" style="text-align:center;padding:18px">
+      <div style="font-size:1.3rem;margin-bottom:6px">📱</div>
+      <div style="font-weight:600;margin-bottom:4px;font-size:.9rem">Cargá con Mercado Pago</div>
+      <div style="font-size:.78rem;color:var(--muted);margin-bottom:12px">Mínimo $2.000 ARS · Acreditación inmediata</div>
+      <button class="btn-main" style="width:auto;padding:10px 24px;font-size:.88rem" onclick="cargarMP()">Cargar ahora</button>
+    </div>
+  </div>
+
+  <!-- RANKING -->
+  <div id="tab-ranking" class="tab-content">
+    <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+      <button class="dur-btn on" onclick="switchRank(this,'global')">Global</button>
+      <button class="dur-btn" onclick="switchRank(this,'amigos')">Amigos</button>
+      <button class="dur-btn" onclick="switchRank(this,'equipos')">Equipos</button>
+    </div>
+    <div id="rank-content"></div>
+  </div>
+
+  <!-- COACH / CHAT -->
+  <div id="tab-coach" class="tab-content" style="padding-bottom:140px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+      <div id="coach-big-ava" style="font-size:2.5rem"></div>
+      <div>
+        <div style="font-family:var(--font-head);font-size:1.1rem;font-weight:800" id="coach-big-name"></div>
+        <div style="font-size:.72rem;color:var(--muted)" id="coach-big-desc"></div>
+      </div>
+    </div>
+    <div class="chat-wrap" id="chat-messages"></div>
+  </div>
+
+  <div class="bottom-nav">
+    <button class="nav-btn active" id="nav-home" onclick="switchTab('home')"><i class="fa fa-home"></i><span>Inicio</span></button>
+    <button class="nav-btn" id="nav-challenges" onclick="switchTab('challenges')"><i class="fa fa-trophy"></i><span>Desafíos</span></button>
+    <div class="nav-center"><button class="nav-plus" id="nav-plus" onclick="openCrear('publico')"><i class="fa fa-plus"></i></button></div>
+    <button class="nav-btn" id="nav-ranking" onclick="switchTab('ranking')"><i class="fa fa-chart-bar"></i><span>Ranking</span></button>
+    <button class="nav-btn" id="nav-coach" onclick="switchTab('coach')"><i class="fa fa-comment"></i><span>Coach</span></button>
+  </div>
+</div>
+
+<!-- MODAL CREAR -->
+<div class="modal-ov" id="modal-crear">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <button class="modal-close" onclick="closeModal('modal-crear')"><i class="fa fa-times"></i></button>
+    <div class="modal-title">Crear Desafío</div>
+    <div class="form-group"><label class="form-label">Nombre</label><input class="form-input" id="c-nom" placeholder="Ej: Caminata al laburo"></div>
+    <div class="form-group"><label class="form-label">Tipo</label><div class="toggle-row"><button class="toggle-btn on" id="t-pub" onclick="setTipo('publico')">🌐 Público</button><button class="toggle-btn" id="t-priv" onclick="setTipo('privado')">🔒 Privado</button></div></div>
+    <div class="form-group"><label class="form-label">Pasos mínimos / día</label><input class="form-input" id="c-pasos" type="number" value="10000"></div>
+    <div class="form-group"><label class="form-label">Entrada ($RAZON)</label><input class="form-input" id="c-ent" type="number" value="50000" oninput="updateEntArs()"><div style="font-size:.72rem;color:var(--muted);margin-top:5px" id="ent-ars-label">= $5.000 ARS</div></div>
+    <div class="form-group"><label class="form-label">Duración</label><div class="dur-row"><button class="dur-btn" onclick="setDur(this,3)">3 días</button><button class="dur-btn on" onclick="setDur(this,7)">7 días</button><button class="dur-btn" onclick="setDur(this,14)">14 días</button><button class="dur-btn" onclick="setDur(this,30)">30 días</button></div></div>
+    <div class="form-group"><label class="form-label">Si fallás</label><div class="toggle-row"><button class="toggle-btn on" id="p-todo" onclick="setPen('todo')">💀 Perdés todo</button><button class="toggle-btn" id="p-vida" onclick="setPen('vida')">❤️ 1 vida</button></div></div>
+    <button class="btn-crear" onclick="crearChallenge()">CREAR DESAFÍO 🚀</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── PERSONAJES ───────────────────────────────────────────────────────────────
+const CHARS = {
+  nahue: {
+    emoji:'⚡', name:'NAHUE', color:'#ef5350',
+    desc:'Extremo, práctico y creativo',
+    frases_home:[
+      '¿Qué hacés acá parado? <b>Salí a caminar, boludo.</b> Los $RAZON no se ganan solos.',
+      'Nico ya hizo sus 10k pasos. <b>¿Vas a dejar que te gane?</b> Dale, movete.',
+      'Escuchame bien: <b>si no caminás hoy, perdés todo.</b> Así de simple. Dale.',
+      'Creatividad cero para las excusas. <b>Llueve? Paraguas. Cansado? Mate y a caminar.</b>',
+    ],
+    frases_chat:[
+      '¿Qué querés saber? Preguntame.',
+      'Dale, contame qué onda.',
+      '¿Cuántos pasos hiciste hoy? Decime la verdad.',
+    ],
+    respuestas:{
+      default: (m) => `Mirá, no te voy a dar vueltas: ${m.length > 20 ? 'lo que me decís tiene sentido, pero' : ''} lo que importa es que salgas a caminar. ¿Cuántos pasos hiciste hoy?`,
+      pasos: 'Bueno, eso está bien. Pero podés hacer más. Mañana te pongo 12k de objetivo. ¿Aceptás el desafío?',
+      cansado: '¿Cansado? Perfecto. Eso significa que tu cuerpo está trabajando. Salí 20 minutos y después me decís cómo te sentís.',
+      motivacion: 'Motivación es para los que no tienen disciplina. Vos tenés plata en juego. ¿Necesitás más razón que esa?',
+    }
+  },
+  juan: {
+    emoji:'🎯', name:'JUAN', color:'#ffd600',
+    desc:'Estricto pero justo. Te exige porque te respeta.',
+    frases_home:[
+      'El plan de hoy: <b>10.000 pasos.</b> Sin excusas, sin negociaciones.',
+      'Revisé tus estadísticas. <b>Podés rendir más.</b> Sé que podés.',
+      '<b>La disciplina diferencia</b> a los que ganan de los que se quejan después.',
+      'Hoy es el día. <b>Cumplís o no cumplís.</b> No hay término medio.',
+    ],
+    frases_chat:[
+      'Decime en qué te puedo ayudar.',
+      'Estoy acá para ayudarte a cumplir tu objetivo.',
+      '¿Cómo vas con el challenge de hoy?',
+    ],
+    respuestas:{
+      default: (m) => `Entendido. Mi recomendación: establecé un horario fijo para caminar. La consistencia es lo que separa a los ganadores. ¿A qué hora podés hacerlo hoy?`,
+      pasos: 'Bien. Eso es progreso. Ahora mantené ese ritmo el resto de la semana. La constancia es clave.',
+      cansado: 'El cansancio es temporal. Perder el challenge es definitivo. Empezá con 10 minutos, te prometo que después seguís.',
+      motivacion: 'La motivación no es suficiente. Necesitás sistemas. Ponete una alarma ahora mismo para salir a caminar.',
+    }
+  },
+  stephie: {
+    emoji:'💋', name:'STEPHIE', color:'#f06292',
+    desc:'Te motiva para que te veas bien y la puedas invitar a cenar.',
+    frases_home:[
+      '¿Sabés qué? <b>Cuando caminás se te ve increíble.</b> En serio, no paro de pensarlo.',
+      'Nico ya caminó. <b>¿Vas a dejar que te gane?</b> Eso no te queda bien...',
+      'Estuve pensando en invitarte a cenar... <b>pero primero tenés que ganar el desafío 😏</b>',
+      'Los que cumplen sus desafíos son mucho más interesantes. <b>¿Vas a ser interesante hoy?</b>',
+    ],
+    frases_chat:[
+      'Hola! Contame cómo te fue hoy 😊',
+      'Estaba pensando en vos... ¿caminaste?',
+      '¿Cómo vas con el desafío? Cuéntame todo.',
+    ],
+    respuestas:{
+      default: (m) => `Ay, me alegra que me escribas! La verdad es que cuando te esforzás así se te nota... y te queda muy bien. ¿Caminaste hoy?`,
+      pasos: 'Bieeen! Eso es lo que me gusta ver 😍 Seguí así y la semana que viene celebramos. Yo invito...',
+      cansado: 'Aw, pobrecito... Pero sabés qué? Una caminata corta te va a dar energía. Y después me contás cómo te sentís. Prometido 💋',
+      motivacion: 'Motivación? Pensá en esto: los que caminan tienen más energía, se ven mejor, y son más interesantes. ¿Necesitás más?',
+    }
+  },
+  mia: {
+    emoji:'🌸', name:'MÍA', color:'#66bb6a',
+    desc:'Siempre positiva. Tu mayor hincha.',
+    frases_home:[
+      '¡Buenos días! <b>Hoy es un día perfecto para sumar pasos</b> 🌸 ¡Vos podés!',
+      '¡Me alegra tanto verte acá! <b>Cada paso que dás cuenta.</b> Sos increíble.',
+      'Recordá: <b>no importa cuánto, importa que lo hacés.</b> Yo creo en vos 💚',
+      '¡Mirá todo lo que ya lograste! <b>Sos una inspiración.</b> ¡Seguí así!',
+    ],
+    frases_chat:[
+      '¡Hola! ¿Cómo estás? ¡Me alegra que estés acá! 🌸',
+      '¡Estoy re orgullosa de que estés usando la app!',
+      'Contame cómo te fue hoy, me interesa saber todo.',
+    ],
+    respuestas:{
+      default: (m) => `¡Qué lindo que me escribís! Siempre es un placer. Mirá, lo más importante es que estás acá, intentándolo. ¡Eso ya es un montón! ¿Cómo te puedo ayudar hoy?`,
+      pasos: '¡WAAAAUU! ¡Eso es INCREÍBLE! 🎉 ¡Estoy tan orgullosa de vos! ¡Seguí así que vas a ganar seguro!',
+      cansado: 'Ay, pasa... Pero mirá: cualquier cosa que puedas hacer está perfecto. Aunque sean 5 minutos. ¡Cada paso cuenta y vos podés! 💚',
+      motivacion: '¡Vos ya sos motivación pura! Solo por estar acá ya demostrás que querés mejorar. ¡Eso es hermoso! ¡Dale que podés!',
+    }
+  }
+};
+
+const TEAMS_DATA = [
+  {char:'nahue', emoji:'⚡', name:'Nahue', color:'#ef5350', pts:'2.4M', steps:'284k', members:142, winning:true},
+  {char:'stephie', emoji:'💋', name:'Stephie', color:'#f06292', pts:'2.1M', steps:'251k', members:138, winning:false},
+  {char:'juan', emoji:'🎯', name:'Juan', color:'#ffd600', pts:'1.8M', steps:'219k', members:115, winning:false},
+  {char:'mia', emoji:'🌸', name:'Mía', color:'#66bb6a', pts:'1.6M', steps:'198k', members:121, winning:false},
+];
+
+const CHALLENGES_DATA = [
+  {nombre:'Desafío Semanal Elite',pasos:10000,dias:7,entrada:50000,participantes:48,pool:2400000,quedan:5},
+  {nombre:'Caminata del fin de semana',pasos:8000,dias:3,entrada:20000,participantes:22,pool:440000,quedan:1},
+  {nombre:'Maratonista 30 días',pasos:12000,dias:30,entrada:100000,participantes:15,pool:1500000,quedan:18},
+  {nombre:'Quemá el asado 🔥',pasos:10000,dias:7,entrada:50000,participantes:31,pool:1550000,quedan:4},
+];
+
+const RANK_GLOBAL = [
+  {nombre:'Facu_runner',emoji:'⚡',char:'nahue',color:'#ef5350',pts:'890k',steps:'98.4k',pos:1},
+  {nombre:'Mari_fit',emoji:'💋',char:'stephie',color:'#f06292',pts:'750k',steps:'87.2k',pos:2},
+  {nombre:'Vos',emoji:'',char:'',color:'',pts:'170k',steps:'52.1k',pos:3},
+  {nombre:'Rodri_cba',emoji:'🎯',char:'juan',color:'#ffd600',pts:'120k',steps:'41.8k',pos:4},
+  {nombre:'Pau_walk',emoji:'🌸',char:'mia',color:'#66bb6a',pts:'95k',steps:'38.5k',pos:5},
+];
+
+// ─── STATE ───────────────────────────────────────────────────────────────────
+let currentUser = null;
+let currentChar = null;
+let balance = 50000;
+let durSel = 7, tipoSel = 'publico', penSel = 'todo';
+const ARS_PER_RAZON = 0.1; // 10.000 RAZON = $1.000 ARS (1USD=$1200, 10000RAZON=$1)
+const RAZON_PER_ARS = 10;  // 1 ARS = 10 RAZON
+
+// ─── LOGIN ────────────────────────────────────────────────────────────────────
+function doLogin(){
+  const u = document.getElementById('u-user').value.trim();
+  const p = document.getElementById('u-pass').value;
+  if(!u||!p){showErr('Completá usuario y contraseña');return;}
+  currentUser = u;
+  goToCharSelect();
+}
+function doRegister(){
+  const u = document.getElementById('u-user').value.trim();
+  if(!u){showErr('Elegí un nombre de usuario');return;}
+  currentUser = u;
+  showToast('🎁 Bienvenido/a! Te regalamos 50.000 $RAZON');
+  goToCharSelect();
+}
+function showErr(m){const e=document.getElementById('login-err');e.textContent='⚠ '+m;e.style.display='block';setTimeout(()=>e.style.display='none',3000);}
+
+function goToCharSelect(){
+  document.getElementById('login-screen').classList.remove('active');
+  document.getElementById('char-screen').classList.add('active');
+}
+
+// ─── SELECCIÓN DE PERSONAJE ───────────────────────────────────────────────────
+function selectChar(el, char){
+  document.querySelectorAll('.char-card').forEach(c=>{
+    c.classList.remove('selected');
+    c.style.borderColor = 'var(--border)';
+    c.style.background = 'var(--card)';
+  });
+  const ch = CHARS[char];
+  el.classList.add('selected');
+  el.style.borderColor = ch.color;
+  el.style.background = `rgba(${hexToRgb(ch.color)},0.08)`;
+  currentChar = char;
+  const btn = document.getElementById('btn-elegir');
+  btn.classList.add('show');
+  btn.style.background = ch.color;
+  btn.textContent = `UNIRME AL EQUIPO ${ch.name} ▸`;
+}
+
+function hexToRgb(hex){
+  const r = parseInt(hex.slice(1,3),16);
+  const g = parseInt(hex.slice(3,5),16);
+  const b = parseInt(hex.slice(5,7),16);
+  return `${r},${g},${b}`;
+}
+
+function confirmChar(){
+  if(!currentChar)return;
+  document.getElementById('char-screen').classList.remove('active');
+  document.getElementById('app-screen').classList.add('active');
+  initApp();
+}
+
+// ─── APP INIT ────────────────────────────────────────────────────────────────
+function initApp(){
+  const ch = CHARS[currentChar];
+  // Aplicar color del personaje
+  document.documentElement.style.setProperty('--char-color', ch.color);
+
+  // Header
+  document.getElementById('h-char-ava').textContent = ch.emoji;
+  document.getElementById('h-char-ava').style.borderColor = ch.color;
+  document.getElementById('h-team-label').textContent = `Equipo ${ch.name}`;
+  document.getElementById('h-team-label').style.color = ch.color;
+  document.getElementById('nav-plus').style.background = ch.color;
+  document.querySelectorAll('.nav-btn.active').forEach(b=>b.style.color=ch.color);
+
+  // Coach en home
+  const frase = ch.frases_home[Math.floor(Math.random()*ch.frases_home.length)];
+  document.getElementById('coach-ava-home').textContent = ch.emoji;
+  document.getElementById('coach-msg-home').innerHTML = frase;
+
+  // Coach tab
+  document.getElementById('coach-big-ava').textContent = ch.emoji;
+  document.getElementById('coach-big-name').textContent = ch.name;
+  document.getElementById('coach-big-name').style.color = ch.color;
+  document.getElementById('coach-big-desc').textContent = ch.desc;
+
+  // Chat inicial
+  addMsg('coach', ch.frases_chat[0]);
+
+  // Render
+  updateBalance();
+  renderTeams();
+  renderChallenges();
+  renderRanking('global');
+
+  // Actualizar "Vos" en ranking con char actual
+  RANK_GLOBAL[2].emoji = ch.emoji;
+  RANK_GLOBAL[2].char = currentChar;
+  RANK_GLOBAL[2].color = ch.color;
+  RANK_GLOBAL[2].nombre = currentUser;
+}
+
+// ─── BALANCE ──────────────────────────────────────────────────────────────────
+function updateBalance(){
+  const fmt = n => n >= 1000 ? (n/1000).toFixed(0)+'k' : n;
+  document.getElementById('h-balance').textContent = fmt(balance);
+  document.getElementById('w-bal').textContent = balance.toLocaleString('es-AR');
+  const ars = Math.round(balance * ARS_PER_RAZON);
+  const usd = (balance / 10000).toFixed(2);
+  document.getElementById('w-ars').textContent = `≈ $${ars.toLocaleString('es-AR')} ARS · $${usd} USD`;
+}
+
+// ─── CONVERSOR ───────────────────────────────────────────────────────────────
+function quickConv(){
+  const ars = parseFloat(document.getElementById('conv-quick').value)||0;
+  const razon = Math.round(ars * RAZON_PER_ARS);
+  document.getElementById('conv-quick-result').textContent = razon ? razon.toLocaleString('es-AR')+' $RAZON' : '— $RAZON';
+}
+function convertArs(){
+  const ars = parseFloat(document.getElementById('conv-ars').value)||0;
+  document.getElementById('conv-ars-result').textContent = ars ? Math.round(ars*RAZON_PER_ARS).toLocaleString('es-AR')+' $RAZON' : '— $RAZON';
+}
+function convertRazon(){
+  const r = parseFloat(document.getElementById('conv-razon').value)||0;
+  document.getElementById('conv-razon-result').textContent = r ? '$'+Math.round(r*ARS_PER_RAZON).toLocaleString('es-AR')+' ARS' : '— ARS';
+}
+function updateEntArs(){
+  const ent = parseInt(document.getElementById('c-ent').value)||0;
+  const ars = Math.round(ent * ARS_PER_RAZON);
+  document.getElementById('ent-ars-label').textContent = `= $${ars.toLocaleString('es-AR')} ARS`;
+}
+
+// ─── TEAMS ───────────────────────────────────────────────────────────────────
+function renderTeams(){
+  document.getElementById('teams-bar').innerHTML = TEAMS_DATA.map(t=>`
+    <div class="team-card ${t.winning?'winning':''}" style="${t.char===currentChar?`border-color:${t.color};background:rgba(${hexToRgb(t.color)},.08)`:''}">
+      ${t.winning?'<div style="font-size:.6rem;color:var(--gold);font-weight:700;margin-bottom:2px">👑 LIDER</div>':''}
+      <span class="team-emoji" style="${t.char===currentChar?`filter:drop-shadow(0 0 8px ${t.color})`:''}">${t.emoji}</span>
+      <div class="team-name" style="color:${t.color}">${t.name}</div>
+      <div class="team-pts" style="color:${t.color}">${t.pts}</div>
+      <div class="team-pts">${t.members} jugadores</div>
+    </div>
+  `).join('');
+}
+
+// ─── CHALLENGES ───────────────────────────────────────────────────────────────
+function renderChallenges(){
+  document.getElementById('pub-challenges').innerHTML = CHALLENGES_DATA.map(c=>`
+    <div class="card" style="margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
+        <div>
+          <div style="font-size:.7rem;color:var(--acc);margin-bottom:3px">${c.pasos.toLocaleString()} pasos × ${c.dias} días</div>
+          <div style="font-family:var(--font-head);font-size:1rem;font-weight:700">${c.nombre}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:.6rem;color:var(--muted)">pozo</div>
+          <div style="font-family:var(--font-head);font-size:1.1rem;color:var(--gold);font-weight:800">${Math.round(c.pool/1000)}k</div>
+          <div style="font-size:.6rem;color:var(--muted)">≈ $${Math.round(c.pool*ARS_PER_RAZON/1000)}k ARS</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px">
+        <div class="card2" style="text-align:center;padding:8px"><div style="font-weight:700;font-size:.88rem">${Math.round(c.entrada/1000)}k</div><div style="font-size:.6rem;color:var(--muted)">Entrada</div></div>
+        <div class="card2" style="text-align:center;padding:8px"><div style="font-weight:700;font-size:.88rem">${c.participantes}</div><div style="font-size:.6rem;color:var(--muted)">Jugando</div></div>
+        <div class="card2" style="text-align:center;padding:8px"><div style="font-weight:700;font-size:.88rem">${c.quedan}d</div><div style="font-size:.6rem;color:var(--muted)">Quedan</div></div>
+      </div>
+      <button class="btn-join" style="font-size:.95rem;padding:12px" onclick="joinChallenge(${c.entrada},'${c.nombre}')">UNIRME — ${Math.round(c.entrada/1000)}k $RAZON · $${Math.round(c.entrada*ARS_PER_RAZON).toLocaleString()} ARS</button>
+    </div>
+  `).join('');
+}
+
+function joinChallenge(ent, nombre){
+  if(balance < ent){showToast('❌ No tenés suficientes $RAZON');setTimeout(()=>switchTab('wallet'),1500);return;}
+  balance -= ent;
+  updateBalance();
+  showToast(`✅ Unido a "${nombre}". ¡A caminar!`);
+  setTimeout(()=>switchTab('home'),1200);
+}
+
+// ─── RANKING ─────────────────────────────────────────────────────────────────
+function renderRanking(tipo){
+  const medals = ['🥇','🥈','🥉'];
+  let html = '';
+  if(tipo === 'equipos'){
+    html = [...TEAMS_DATA].sort((a,b)=>parseInt(b.pts)-parseInt(a.pts)).map((t,i)=>`
+      <div class="rank-row" style="${i===TEAMS_DATA.length-1?'border:none':''}">
+        <div class="rank-pos">${i<3?medals[i]:i+1}</div>
+        <div class="rank-ava" style="background:rgba(${hexToRgb(t.color)},.15);font-size:1.3rem">${t.emoji}</div>
+        <div class="rank-info">
+          <div class="rank-name" style="color:${t.color}">Equipo ${t.name}</div>
+          <div class="rank-meta">${t.members} jugadores · ${t.steps} pasos totales</div>
+        </div>
+        <div class="rank-pts">${t.pts}</div>
+      </div>
+    `).join('');
+  } else if(tipo === 'amigos'){
+    const amigos = [
+      {nombre:'Nico',emoji:'⚡',color:'#ef5350',pts:'320k',steps:'34.2k',pos:1},
+      {nombre:'Caro',emoji:'💋',color:'#f06292',pts:'180k',steps:'22.1k',pos:2},
+      {nombre:currentUser,emoji:CHARS[currentChar].emoji,color:CHARS[currentChar].color,pts:'170k',steps:'20.8k',pos:3},
+      {nombre:'Seba',emoji:'💀',color:'var(--muted)',pts:'0',steps:'8.1k',pos:4},
+    ];
+    html = amigos.map((r,i)=>`
+      <div class="rank-row" style="${i===amigos.length-1?'border:none':''}">
+        <div class="rank-pos">${i<3?medals[i]:i+1}</div>
+        <div class="rank-ava" style="background:rgba(41,182,246,.1)">${r.emoji}</div>
+        <div class="rank-info">
+          <div class="rank-name" style="${r.nombre===currentUser?`color:${CHARS[currentChar].color}`:''}">${r.nombre}</div>
+          <div class="rank-meta">${r.steps} pasos esta semana</div>
+        </div>
+        <div class="rank-pts" style="${r.pts==='0'?'color:var(--danger)':''}">${r.pts==='0'?'💀 eliminado':r.pts}</div>
+      </div>
+    `).join('');
+  } else {
+    html = RANK_GLOBAL.map((r,i)=>`
+      <div class="rank-row" style="${i===RANK_GLOBAL.length-1?'border:none':''}">
+        <div class="rank-pos">${i<3?medals[i]:i+1}</div>
+        <div class="rank-ava" style="background:rgba(41,182,246,.1)">${r.emoji}</div>
+        <div class="rank-info">
+          <div class="rank-name" style="${r.nombre===currentUser?`color:${CHARS[currentChar]?.color||'var(--acc)'}`:''}">${r.nombre===currentUser?'⭐ '+r.nombre:r.nombre}</div>
+          <div class="rank-meta">${r.steps} pasos esta semana</div>
+        </div>
+        <div class="rank-pts">${r.pts}</div>
+      </div>
+    `).join('');
+  }
+  document.getElementById('rank-content').innerHTML = `<div class="card" style="padding:0 14px">${html}</div>`;
+}
+
+function switchRank(btn, tipo){
+  document.querySelectorAll('#tab-ranking .dur-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  renderRanking(tipo);
+}
+
+// ─── COACH CHAT ───────────────────────────────────────────────────────────────
+function addMsg(from, text){
+  const wrap = document.getElementById('chat-messages');
+  const ch = CHARS[currentChar];
+  const div = document.createElement('div');
+  if(from === 'coach'){
+    div.innerHTML = `<div class="chat-sender" style="color:${ch.color}">${ch.emoji} ${ch.name}</div><div class="msg msg-coach">${text}</div>`;
+  } else {
+    div.innerHTML = `<div class="msg msg-user" style="background:${ch.color}">${text}</div>`;
+    div.style.display='flex';div.style.justifyContent='flex-end';
+  }
+  wrap.appendChild(div);
+  wrap.scrollTop = wrap.scrollHeight;
+}
+
+function sendChat(){
+  const inp = document.getElementById('chat-inp');
+  const msg = inp.value.trim();
+  if(!msg) return;
+  addMsg('user', msg);
+  inp.value = '';
+  const ch = CHARS[currentChar];
+  setTimeout(()=>{
+    const ml = msg.toLowerCase();
+    let resp;
+    if(ml.includes('paso') || ml.includes('camin') || ml.includes('10k') || ml.includes('corr')){
+      resp = ch.respuestas.pasos;
+    } else if(ml.includes('cansa') || ml.includes('no pued') || ml.includes('no quiero') || ml.includes('pereza')){
+      resp = ch.respuestas.cansado;
+    } else if(ml.includes('motiv') || ml.includes('ánimo') || ml.includes('animo') || ml.includes('ayud')){
+      resp = ch.respuestas.motivacion;
+    } else {
+      resp = typeof ch.respuestas.default === 'function' ? ch.respuestas.default(msg) : ch.respuestas.default;
+    }
+    addMsg('coach', resp);
+  }, 800);
+}
+
+// ─── TABS ────────────────────────────────────────────────────────────────────
+function switchTab(tab){
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  const nb = document.getElementById('nav-'+tab);
+  if(nb){ nb.classList.add('active'); }
+}
+
+// ─── CREAR CHALLENGE ─────────────────────────────────────────────────────────
+function openCrear(tipo){
+  tipoSel = tipo || 'publico';
+  document.getElementById('t-pub').classList.toggle('on', tipoSel==='publico');
+  document.getElementById('t-priv').classList.toggle('on', tipoSel==='privado');
+  document.getElementById('modal-crear').classList.add('open');
+}
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+function setTipo(t){ tipoSel=t; document.getElementById('t-pub').classList.toggle('on',t==='publico'); document.getElementById('t-priv').classList.toggle('on',t==='privado'); }
+function setPen(p){ penSel=p; document.getElementById('p-todo').classList.toggle('on',p==='todo'); document.getElementById('p-vida').classList.toggle('on',p==='vida'); }
+function setDur(btn, d){ durSel=d; document.querySelectorAll('.dur-row .dur-btn').forEach(b=>b.classList.remove('on')); btn.classList.add('on'); }
+
+function crearChallenge(){
+  const nom = document.getElementById('c-nom').value.trim();
+  const ent = parseInt(document.getElementById('c-ent').value)||50000;
+  if(!nom){ showToast('❌ Poné un nombre'); return; }
+  if(balance < ent){ showToast('❌ No tenés suficientes $RAZON'); return; }
+  balance -= ent;
+  updateBalance();
+  CHALLENGES_DATA.unshift({nombre:nom, pasos:parseInt(document.getElementById('c-pasos').value)||10000, dias:durSel, entrada:ent, participantes:1, pool:ent, quedan:durSel});
+  renderChallenges();
+  closeModal('modal-crear');
+  showToast(`🚀 Desafío "${nom}" creado!`);
+  if(tipoSel==='privado') setTimeout(invitar, 1000);
+}
+
+// ─── MISC ────────────────────────────────────────────────────────────────────
+function cargarPasos(){
+  const pasos = Math.floor(Math.random()*5000)+7500;
+  if(pasos >= 10000){ balance += 5000; updateBalance(); showToast(`✅ ${pasos.toLocaleString()} pasos verificados! +5.000 $RAZON`); }
+  else showToast(`⚠️ ${pasos.toLocaleString()} pasos. Te faltan ${(10000-pasos).toLocaleString()} para el objetivo!`);
+}
+function invitar(){
+  const ch = CHARS[currentChar];
+  const msg = encodeURIComponent(`Ey! Estoy usando Tenía Razón ${ch.emoji} — te pagan por caminar pero si fallás un día perdés TODO. Soy del equipo ${ch.name}. Unite: https://tenia-razon.vercel.app`);
+  window.open('https://wa.me/?text='+msg,'_blank');
+}
+function comprar(){
+  const ars = prompt('¿Cuántos ARS querés convertir a $RAZON?\n(Mínimo $2.000 ARS)');
+  if(!ars || isNaN(ars)) return;
+  const razon = Math.round(parseFloat(ars) * RAZON_PER_ARS);
+  balance += razon;
+  updateBalance();
+  showToast(`✅ +${razon.toLocaleString()} $RAZON · $${parseFloat(ars).toLocaleString()} ARS`);
+}
+function retirar(){
+  const min = 500000;
+  if(balance < min){ showToast(`❌ Mínimo ${min.toLocaleString()} $RAZON para retirar`); return; }
+  showToast('💸 Retiro iniciado. Acreditación en 48hs.');
+}
+function cargarMP(){ showToast('🔄 Redirigiendo a Mercado Pago...'); setTimeout(()=>showToast('💡 Próximamente: integración real con MP'),2000); }
+function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3000); }
+
+// Click fuera del modal lo cierra
+document.querySelectorAll('.modal-ov').forEach(m=>m.addEventListener('click',function(e){if(e.target===this)this.classList.remove('open')}));
+
+// Enter en chat
+document.addEventListener('keydown', function(e){
+  if(e.key==='Enter' && document.getElementById('chat-inp')===document.activeElement) sendChat();
+});
+</script>
+
+<!-- CHAT INPUT (fuera del tab para posición fixed) -->
+<div class="chat-input-wrap" id="chat-input-wrap" style="display:none">
+  <input class="chat-input" id="chat-inp" placeholder="Escribile a tu coach...">
+  <button class="chat-send" id="chat-send-btn" onclick="sendChat()">Enviar</button>
+</div>
+
+<script>
+// Mostrar/ocultar chat input según tab activo
+const origSwitch = switchTab;
+window.switchTab = function(tab){
+  origSwitch(tab);
+  document.getElementById('chat-input-wrap').style.display = tab==='coach'?'flex':'none';
+  // Actualizar nav color
+  document.querySelectorAll('.nav-btn.active').forEach(b=>b.style.color=currentChar?CHARS[currentChar].color:'var(--acc)');
+};
+</script>
+</body>
+</html>
