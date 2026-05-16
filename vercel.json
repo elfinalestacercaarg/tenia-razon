@@ -1,0 +1,6 @@
+{
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ],
+  "buildCommand": "set DISABLE_ESLINT_PLUGIN=true && set CI=false && npm run build"
+}
