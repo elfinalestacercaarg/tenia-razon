@@ -5,7 +5,20 @@
       "Bash(git commit *)",
       "Bash(git push *)",
       "Bash(npx vercel *)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(npm start *)",
+      "Bash(set DISABLE_ESLINT_PLUGIN=true)",
+      "Bash(set CI=false)",
+      "Bash(timeout 10 bash -c \"while ! nc -z localhost 3000; do sleep 1; done; echo 'Server ready'\")",
+      "Bash(netstat -ano)",
+      "Bash(findstr :3000)",
+      "Bash(taskkill /F /PID 13852)",
+      "Bash(set DISABLE_ESLINT_PPL=TRUE)",
+      "Bash(set CI=FALSE)",
+      "Bash(taskkill *)",
+      "Bash(powershell *)",
+      "Bash(curl *)",
+      "Bash(awk '{print $5}')"
     ]
   }
 }

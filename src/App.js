@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { AuthProvider, useAuth } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext.jsx';   // ← CAMBIADO
 import Login from './Login';
 import CharSelect from './CharSelect';
 import Home from './pages/Home';
@@ -12,7 +12,7 @@ import { S } from './styles';
 // Simple guard for authenticated routes
 const PrivateRoute = ({ children }) => {
   const { user, loading } = useAuth();
-  if (loading) return null; // could render a spinner
+  if (loading) return null;
   return user ? children : <Navigate to="/login" replace />;
 };
 
